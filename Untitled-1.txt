@@ -1,0 +1,257 @@
+from pygame import *
+import random
+import sys
+from random import *
+ 
+mixer.init()
+mixer.music.load('space.ogg')
+ 
+lost = 0
+score = 0
+hitA = 5
+HpR = 5
+ammo = 8
+ 
+font.init()
+font1 = font.SysFont('Arial', 36)
+ 
+class GameSprite(sprite.Sprite):
+    def __init__(self, object_image, object_x, object_y, object_speed, size_x, size_y):
+        super().__init__()
+        self.image = transform.scale(image.load(object_image), (size_x, size_y))
+        self.speed = object_speed
+        self.rect = self.image.get_rect()
+        self.rect.x = object_x
+        self.rect.y = object_y
+        self.direction = 'left'
+    def reset(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+ 
+    def move_hero(self):
+        if keys_pressed[K_a] and self.rect.x > 5:
+            self.rect.x -= self.speed
+        if keys_pressed[K_d] and self.rect.x < 620:
+            self.rect.x += self.speed
+ 
+    def update(self):
+        self.rect.y += self.speed
+        global lost
+        global score, HpR
+        if self.rect.y >= 500:
+            self.rect.x = randint(20,610)
+            self.rect.y = 0
+            lost = lost+1
+        sprites_list2 = sprite.groupcollide(
+            enemyes, bullets, True, True
+        )
+        for i in sprites_list2:
+            ufo = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+            enemyes.add(ufo)
+            if sprites_list2:
+                score += 1
+            if sprites_list2:
+                HpR += 0.5
+        sprites_list1 = sprite.spritecollide(
+            hero, enemyes, True
+        )
+        for i in sprites_list1:
+            ufo = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+            enemyes.add(ufo)
+            if sprites_list1:
+                HpR = HpR-4.5
+ 
+    def fire(self):
+        bullet = Bullet('bullet.png', self.rect.centerx, self.rect.top, -15, 15, 20)
+        bullets.add(bullet)
+        global ammo
+        ammo = ammo-1
+ 
+ 
+class Bullet(GameSprite):
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y < 0:
+            self.kill()
+ 
+class Aster(GameSprite):
+    def update(self):
+        self.rect.y += self.speed
+        global lost
+        if self.rect.y >= 500:
+            self.rect.x = randint(20,610)
+            self.rect.y = 0
+            lost = lost+0.5
+        global hitA
+        global score
+        if hitA == 0:
+            sprites_list5 = sprite.groupcollide(bullets, rocks, True, True)
+            for i in sprites_list5:
+                self.kill()
+                score += 1
+ 
+ 
+ 
+window = display.set_mode((700, 500))
+display.set_caption('Shooter')
+ 
+meteor1 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+meteor2 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+meteor3 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+meteor4 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+meteor5 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+meteor6 = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 45, 45)
+ufo1 = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+ufo2 = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+ufo3 = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+ufo4 = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+ufo5 = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+background = GameSprite('galaxy.jpg', 0, 0, 0, 700, 500)
+hero = GameSprite('rocket.png', 325, 370, 4.5, 75, 125)
+ 
+ 
+enemyes = sprite.Group()
+enemyes.add(ufo1, ufo2, ufo3, ufo4, ufo5)
+ 
+bullets = sprite.Group()
+ 
+rocks = sprite.Group()
+rocks.add(meteor1, meteor2, meteor3, meteor4, meteor5, meteor6)
+ 
+ 
+ 
+clock = time.Clock()
+FPS = 60
+ 
+ 
+ 
+game = True
+finish = False
+ 
+mixer.music.play()
+ 
+while game:
+    keys_pressed = key.get_pressed()
+    hero.move_hero()
+ 
+ 
+ 
+    for e in event.get():
+        if e.type == QUIT:
+            game = False
+    if finish != True:
+        if keys_pressed[K_SPACE] and ammo > 0:
+            hero.fire()
+        background.reset()
+        hero.reset()
+        enemyes.draw(window)
+        enemyes.update()
+        bullets.draw(window)
+        bullets.update()
+        rocks.draw(window)
+        rocks.update()
+ 
+        miss_enemy = font1.render(
+            'miss:' + str(lost), 1, (255, 255, 255)
+            )
+        window.blit(miss_enemy, (10, 10))
+        score_d = font1.render(
+            'score:' + str(score), 1, (255, 255, 255)
+            )
+        window.blit(score_d, (10, 45))
+ 
+        score_Hp = font1.render(
+            'HP:' + str(HpR), 1, (25, 255, 25)
+            )
+        window.blit(score_Hp, (10, 80))
+ 
+        P1_ammo = font1.render(
+            'Ammo:', 1, (255, 125, 25)
+            )
+        window.blit(P1_ammo, (10, 115))
+ 
+        P2_ammo = font1.render(
+            ' ' + str(ammo), 1, (255, 255, 255)
+            )
+ 
+        R_ammo = font1.render(
+            'Reloading... (R)', 1, (255, 50, 25)
+            )
+ 
+        TMA = font1.render(
+            'TEST MODE ON', 3, (255, 255, 255)
+            )
+ 
+        TMF = font1.render(
+            'TEST MODE OFF', 3, (255, 255, 255)
+            )
+ 
+        gamewin = font1.render(
+            'You WIN', 12, (255, 255, 255)
+            )
+ 
+        gamelos = font1.render(
+            'You Lose', 12, (255, 255, 255)
+            )
+ 
+        if score >= 60:
+            window.blit(gamewin, (300, 230))
+            mixer.music.stop()
+            finish = True
+ 
+ 
+        '''sprites_list1 = sprite.spritecollide(
+            hero, enemyes, True
+        )'''
+ 
+        '''sprites_list2 = sprite.groupcollide(
+            enemyes, bullets, True, True
+        )'''
+ 
+        sprites_list3 = sprite.groupcollide(
+            rocks, bullets, False, True
+        )
+ 
+        sprites_list4 = sprite.spritecollide(
+            hero, rocks, True
+        )
+ 
+ 
+        if sprites_list4:
+            score += 1
+ 
+        if lost >= 40 or HpR <= 0:
+            window.blit(gamelos, (300, 230))
+            mixer.music.stop()
+            finish = True
+ 
+ 
+        if sprites_list3:
+            hitA -= 1
+            rocks.update()
+ 
+        if sprites_list4:
+            HpR -= 2
+ 
+        if ammo <= 0:
+            window.blit(R_ammo, (130, 115))
+        else:
+            window.blit(P2_ammo, (120, 115))
+ 
+        if keys_pressed[K_r] and ammo <= 0:
+            ammo = 8
+ 
+        if keys_pressed[K_i]:
+            meteor = Aster('asteroid.png', randint(10,690), 0, randint(1,2), 35, 35)
+            rocks.add(meteor)
+ 
+        if keys_pressed[K_o]:
+            ufo = GameSprite('ufo.png', randint(20,610), 0, randint(1,4), 100, 80)
+            enemyes.add(ufo)
+ 
+        if ammo > 8 and keys_pressed[K_DOWN]:
+            window.blit(TMF, (250, 30))
+            HpR = 5
+            ammo = 8
+ 
+        display.update()
+        clock.tick(FPS)
